@@ -83,10 +83,7 @@ python tools/patch_advance_collection.py ^
 | 백야의 협주곡 (Harmony of Dissonance) | **ARCHE**(총괄), 알렉스, 묘목, 엑소버드, 알 | v1.4 / 2022-01-29 | [한글로게임](https://www.hangulogame.com/post/patch/gba/950/) · [원배포(한시구 카페)](https://cafe.naver.com/hansicgu/28039) |
 | 효월의 원무곡 (Aria of Sorrow) | **ARCHE**(총괄), 알렉스, 엑소버드, 의문의솜털, DEVA | v2.2 / 2022-01-29 | [한글로게임](https://www.hangulogame.com/post/patch/gba/399/) · [원배포(한시구 카페)](https://cafe.naver.com/hansicgu/28039) |
 | 악마성 드라큘라 XX (SNES) | **팀무풍(TEAM MUPUNG)** — passion_pay(프로그래밍), 한마루(번역/그래픽), 하루(MSU1), Conn(영문) | 2017-11-06 (MSU1 2022-08-26) | [팀무풍](https://teammp.diskstation.me/043.php) |
-| 서클 오브 더 문 (Circle of the Moon) | *확인 필요* — 후보: 한마루(2024) 또는 강민석·rainbovv(2004) | — | [한글로게임 2024](https://www.hangulogame.com/patch/gba/2023) · [한글로게임 2004](https://www.hangulogame.com/patch/gba/128) |
-
-> 서클 오브 더 문 한글패치는 두 가지가 존재합니다. 실제 사용한 패치에 맞게
-> 크레딧을 확정해 주세요.
+| 서클 오브 더 문 (Circle of the Moon) | **강민석 (rainbovv)** | 2004-03-27 | [한글로게임](https://www.hangulogame.com/patch/gba/128) |
 
 ### 도구/기술 크레딧
 - **FreeMote** — Ulysses ([UlyssesWu/FreeMote](https://github.com/UlyssesWu/FreeMote))
