@@ -1,0 +1,28 @@
+# 게임 데이터/ROM/아카이브는 절대 커밋하지 않음 (저작권)
+*.bin
+*.psb.m
+*.gba
+*.smc
+*.sfc
+*.gbc
+*.nes
+*.xdelta
+*.zip
+*.7z
+
+# 작업 폴더
+_krpatch_work/
+_backup-*/
+tooltest_windata/
+extract/
+aligned/
+verify/
+reextract/
+
+# 파이썬
+__pycache__/
+*.pyc
+
+# 도구 바이너리 (사용자가 직접 받도록)
+FreeMote*/
+*.exe
