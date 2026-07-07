@@ -58,8 +58,13 @@ class App(tk.Tk):
                             padding=PAD)
         f2.pack(fill="x", pady=4)
         self.var_fm = tk.StringVar()
-        self.lbl_fm = self._path_row(f2, self.var_fm, self._pick_fm, self._detect_fm,
-                                     extra=("FreeMote 받기", lambda: webbrowser.open(FREEMOTE_URL)))
+        self.lbl_fm = self._path_row(
+            f2, self.var_fm, self._pick_fm, self._detect_fm,
+            extras=[("자동 설치", self._install_freemote),
+                    ("수동 받기", lambda: webbrowser.open(FREEMOTE_URL))])
+        ttk.Label(f2, text="FreeMote가 없으면 '자동 설치'를 누르세요 "
+                          "(공식 GitHub에서 받아 %LOCALAPPDATA%에 설치합니다).",
+                  foreground="#777").pack(anchor="w")
 
         # ③ 한글 ROM 선택
         f3 = ttk.LabelFrame(main, text="③ 한글패치 ROM 선택 (교체할 게임만 선택하면 됩니다)",
@@ -86,14 +91,14 @@ class App(tk.Tk):
         self.status = ttk.Label(main, text="준비됨", relief="sunken", anchor="w")
         self.status.pack(fill="x", pady=(4, 0))
 
-    def _path_row(self, parent, var, pick, detect, extra=None):
+    def _path_row(self, parent, var, pick, detect, extras=None):
         row = ttk.Frame(parent); row.pack(fill="x")
         ent = ttk.Entry(row, textvariable=var)
         ent.pack(side="left", fill="x", expand=True)
-        ttk.Button(row, text="자동 감지", command=detect, width=9).pack(side="left", padx=3)
-        ttk.Button(row, text="찾아보기", command=pick, width=9).pack(side="left")
-        if extra:
-            ttk.Button(row, text=extra[0], command=extra[1], width=12).pack(side="left", padx=3)
+        ttk.Button(row, text="자동 감지", command=detect, width=8).pack(side="left", padx=3)
+        ttk.Button(row, text="찾아보기", command=pick, width=8).pack(side="left")
+        for label, cb in (extras or []):
+            ttk.Button(row, text=label, command=cb, width=8).pack(side="left", padx=3)
         lbl = ttk.Label(parent, text="", foreground="#c00")
         lbl.pack(anchor="w", pady=(2, 0))
         var.trace_add("write", lambda *_: self._revalidate())
@@ -135,6 +140,41 @@ class App(tk.Tk):
             messagebox.showinfo("자동 감지",
                                 "FreeMote 폴더를 찾지 못했습니다.\n"
                                 "'FreeMote 받기'로 내려받아 압축을 푼 뒤 '찾아보기'로 지정하세요.")
+
+    def _install_freemote(self):
+        if core.valid_freemote(self.var_fm.get().strip()):
+            if not messagebox.askyesno("FreeMote 자동 설치",
+                                       "이미 유효한 FreeMote 경로가 지정돼 있습니다.\n"
+                                       "그래도 새로 받아 설치할까요?"):
+                return
+        self.btn.configure(state="disabled")
+        self.status.configure(text="FreeMote 다운로드 준비 중 ...")
+        threading.Thread(target=self._fm_worker, daemon=True).start()
+
+    def _fm_worker(self):
+        def prog(got, total):
+            txt = (f"FreeMote 다운로드 {got * 100 // total}%"
+                   if total else f"FreeMote 다운로드 {got // 1024:,}KB")
+            self.after(0, lambda: self.status.configure(text=txt))
+        try:
+            path = core.download_freemote(log=self._log_safe, progress=prog)
+            self.after(0, lambda: self._fm_done(path))
+        except Exception as e:
+            self.after(0, lambda m=str(e): self._fm_fail(m))
+
+    def _fm_done(self, path):
+        self.var_fm.set(path)
+        self.btn.configure(state="normal")
+        self.status.configure(text="FreeMote 설치 완료")
+        messagebox.showinfo("완료", f"FreeMote 설치 완료:\n{path}")
+
+    def _fm_fail(self, msg):
+        self.btn.configure(state="normal")
+        self.status.configure(text="FreeMote 설치 실패")
+        if messagebox.askyesno("FreeMote 설치 실패",
+                               f"{msg}\n\n브라우저에서 수동으로 받으시겠습니까?\n"
+                               "(압축을 푼 뒤 '찾아보기'로 폴더를 지정하세요)"):
+            webbrowser.open(FREEMOTE_URL)
 
     def _pick_windata(self):
         d = filedialog.askdirectory(title="windata 폴더 선택")
@@ -209,6 +249,13 @@ def main():
         app.after(300, app.destroy)
         app.mainloop()
         print("selftest OK")
+        return
+    if "--test-download" in sys.argv:
+        i = sys.argv.index("--test-download")
+        dest = sys.argv[i + 1] if i + 1 < len(sys.argv) else None
+        p = core.download_freemote(dest_parent=dest, log=print,
+                                   progress=lambda g, t: None)
+        print("DOWNLOAD OK:", p, "valid:", core.valid_freemote(p))
         return
     App().mainloop()
 

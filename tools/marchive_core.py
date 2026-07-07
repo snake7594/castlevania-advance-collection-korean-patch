@@ -88,6 +88,7 @@ def autodetect_freemote():
     if getattr(sys, "frozen", False):
         exed = Path(sys.executable).resolve().parent
         search += [exed, exed / "FreeMote"]
+    search.append(freemote_install_root())  # 자동 설치 위치
     up = os.environ.get("USERPROFILE")
     if up:
         for name in ("Downloads", "Desktop", "Documents", ""):
@@ -115,6 +116,66 @@ def autodetect_freemote():
         except Exception:
             continue
     return str(hits[0]) if hits else ""
+
+
+# FreeMote 공식 릴리즈 (tag v4.6.0 안의 asset이 v4.6.1 — 이 도구가 검증한 버전)
+FREEMOTE_DOWNLOAD_URL = ("https://github.com/UlyssesWu/FreeMote/releases/download/"
+                         "v4.6.0/Ulysses-FreeMoteToolkit-v4.6.1.zip")
+FREEMOTE_DIRNAME = "FreeMote-v4.6.1"
+
+
+def freemote_install_root():
+    """자동 설치 위치: %LOCALAPPDATA%\\CastlevaniaAdvanceKR."""
+    import os
+    base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA") or str(Path.home())
+    return Path(base) / "CastlevaniaAdvanceKR"
+
+
+def download_freemote(dest_parent=None, log=print, progress=None):
+    """FreeMote 툴킷을 공식 GitHub 릴리즈에서 받아 압축 해제한다. 폴더 경로 반환.
+    progress(got, total) 콜백(선택). 재배포가 아니라 공식 소스에서 직접 내려받는다."""
+    import urllib.request
+    import ssl
+    import tempfile
+    import zipfile
+    dest_parent = Path(dest_parent) if dest_parent else freemote_install_root()
+    dest = dest_parent / FREEMOTE_DIRNAME
+    if valid_freemote(dest):
+        log(f"FreeMote 이미 설치됨: {dest}")
+        return str(dest)
+    dest.mkdir(parents=True, exist_ok=True)
+    log("FreeMote 다운로드 중 ... (공식 GitHub 릴리즈)")
+    req = urllib.request.Request(
+        FREEMOTE_DOWNLOAD_URL, headers={"User-Agent": "CastlevaniaAdvanceKR-Installer"})
+    ctx = ssl.create_default_context()
+    tmp = Path(tempfile.gettempdir()) / "FreeMote-toolkit.zip"
+    try:
+        with urllib.request.urlopen(req, context=ctx, timeout=60) as r:
+            total = int(r.headers.get("Content-Length") or 0)
+            got = 0
+            with open(tmp, "wb") as f:
+                while True:
+                    chunk = r.read(65536)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    got += len(chunk)
+                    if progress:
+                        progress(got, total)
+        log("압축 해제 중 ...")
+        with zipfile.ZipFile(tmp) as z:
+            z.extractall(dest)
+    except Exception as e:
+        raise PatchError(f"FreeMote 다운로드 실패: {e}")
+    finally:
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+    if not valid_freemote(dest):
+        raise PatchError("FreeMote 설치 실패: 압축 해제 후 실행파일을 찾지 못했습니다.")
+    log(f"FreeMote 설치 완료: {dest}")
+    return str(dest)
 
 
 def valid_windata(path):
